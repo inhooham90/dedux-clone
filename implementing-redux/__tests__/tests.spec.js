@@ -38,7 +38,15 @@ describe('dedux', () => {
 
       it(`dispatch should take any dispatched action and run it 
           through the reducer function to produce a new state.`, () => {
-        const reducer = () => {} // Your reducer function here!
+        const reducer = (state = {}, action = {}) => {
+          Object.freeze(state);
+          switch (action.type) {
+              case "BAZIFY":
+                  return { ...state, foo: 'baz' };
+              default:
+                  return { ...state, foo: 'bar' };
+          }
+        } // Your reducer function here!
 
         const store = createStore(reducer)
 
@@ -54,6 +62,7 @@ describe('dedux', () => {
       it(`has a subscribe method that receives updates on any state change`, () => {
         const subscriber = jest.fn()
         const reducer = (state = 0, action = {}) => {
+
           switch (action.type) {
             case 'CALCULATE_MEANING_OF_LIFE':
               return 42
@@ -95,32 +104,75 @@ describe('dedux', () => {
         store.dispatch({ type: 'CALCULATE_MEANING_OF_LIFE' })
         expect(subscriber).toHaveBeenCalledTimes(1)
       })
+
+      it(`unsubscribes multiple subscribers without effecting other subscribers`, () => {
+        const subscriber1 = jest.fn();
+        const subscriber2 = jest.fn();
+        const subscriber3 = jest.fn();
+
+        const reducer = (state = 0, action = {}) => {
+          switch (action.type) {
+            case 'CALCULATE_MEANING_OF_LIFE':
+              return 42
+            default:
+              return state
+          }
+        }
+
+        const store = createStore(reducer);
+
+        const unsubscribe1 = store.subscribe(subscriber1);
+        const unsubscribe2 = store.subscribe(subscriber2);
+        store.subscribe(subscriber3);
+
+        store.dispatch({ type: 'CALCULATE_MEANING_OF_LIFE' })
+
+        expect(subscriber1).toHaveBeenCalledTimes(1);
+        expect(subscriber2).toHaveBeenCalledTimes(1);
+        expect(subscriber3).toHaveBeenCalledTimes(1);
+
+        unsubscribe1();
+
+        store.dispatch({ type: 'CALCULATE_MEANING_OF_LIFE' })
+
+        expect(subscriber1).toHaveBeenCalledTimes(1);
+        expect(subscriber2).toHaveBeenCalledTimes(2);
+        expect(subscriber3).toHaveBeenCalledTimes(2);
+
+        unsubscribe2();
+
+        store.dispatch({ type: 'CALCULATE_MEANING_OF_LIFE' })
+
+        expect(subscriber1).toHaveBeenCalledTimes(1)
+        expect(subscriber2).toHaveBeenCalledTimes(2)
+        expect(subscriber3).toHaveBeenCalledTimes(3)
+      })
     })
   })
 
   describe.skip('applyMiddleware', () => {
     // Don't start this until you've completed part 2 of the challenge
-    it('can apply middleware to dispatched actions', () => {
-      const reducer = () => null
-      const spyA = jest.fn()
-      const spyB = jest.fn()
+    // it('can apply middleware to dispatched actions', () => {
+    //   const reducer = () => null
+    //   const spyA = jest.fn()
+    //   const spyB = jest.fn()
 
-      const middleWareMocker = spy => () => next => action => {
-        spy(action)
-        // Middleware must call 'next'
-        next(action)
-      }
+    //   const middleWareMocker = spy => () => next => action => {
+    //     spy(action)
+    //     // Middleware must call 'next'
+    //     next(action)
+    //   }
 
-      const store = createStore(reducer)
+    //   const store = createStore(reducer)
 
-      applyMiddleware(store, [middleWareMocker(spyA), middleWareMocker(spyB)])
+    //   applyMiddleware(store, [middleWareMocker(spyA), middleWareMocker(spyB)])
 
-      const action = { type: 'ZAP' }
+    //   const action = { type: 'ZAP' }
 
-      store.dispatch(action)
+    //   store.dispatch(action)
 
-      expect(spyA).toHaveBeenCalledWith(action)
-      expect(spyB).toHaveBeenCalledWith(action)
-    })
+    //   expect(spyA).toHaveBeenCalledWith(action)
+    //   expect(spyB).toHaveBeenCalledWith(action)
+    // })
   })
 })

@@ -1,0 +1,8 @@
+const COUNTER_ACTIONS = {
+    INCREMENT: 'INCREMENT',
+    DECREMENT: 'DECREMENT',
+    RESET: 'RESET',
+    SET: 'SET'
+};
+
+export default COUNTER_ACTIONS;
